@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生室內賽艇訓練管理平台 (Ergometer Tracker)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="trophy" class="text-amber-400 w-8 h-8"></i>
+        <h1 class="text-xl font-bold tracking-wide">室內賽艇訓練紀錄平台</h1>
+      </div>
+      <nav class="flex space-x-2 mt-2 sm:mt-0">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn bg-blue-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+          <i data-lucide="user"></i> 個人儀表板 (最近5次)
+        </button>
+        <button onclick="switchTab('ranking')" id="tab-ranking" class="nav-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+          <i data-lucide="award"></i> 個人排名榜
+        </button>
+        <button onclick="switchTab('team')" id="tab-team" class="nav-btn bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+          <i data-lucide="users"></i> 隊際表現紀錄
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- 頁面 1：個人儀表板 (最近5次紀錄) -->
+    <section id="page-dashboard" class="space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">個人訓練儀表板</h2>
+          <p class="text-slate-500 text-sm">選擇學生即可查看其近期訓練趨勢及最近 5 次訓練成績</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="font-semibold text-slate-700">選擇學生：</label>
+          <select id="dash-student-select" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5 min-w-[160px]">
+            <!-- 動態載入學生列表 -->
+          </select>
+          <button onclick="openModal('solo-modal')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-1 shadow">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> 新增個人紀錄
+          </button>
+        </div>
+      </div>
+
+      <!-- 最近5次成績統計與列表 -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h3 class="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2">
+          <i data-lucide="history" class="text-blue-600"></i> 最近 5 次訓練紀錄
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs uppercase font-semibold">
+                <th class="p-3">日期</th>
+                <th class="p-3">項目</th>
+                <th class="p-3">使用風阻 (Damper)</th>
+                <th class="p-3">成績 (時間)</th>
+                <th class="p-3">距離 (m)</th>
+                <th class="p-3">平均配速 (/500m)</th>
+              </tr>
+            </thead>
+            <tbody id="dash-records-body" class="divide-y divide-slate-100 text-sm">
+              <!-- 動態載入最近5次數據 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 頁面 2：個人排名榜 -->
+    <section id="page-ranking" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">個人成績排行榜</h2>
+          <p class="text-slate-500 text-sm">按訓練項目分類查看學生最佳成績榜</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="font-semibold text-slate-700">排名項目：</label>
+          <select id="rank-event-select" onchange="renderRanking()" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+            <option value="2000m">2000m 測速</option>
+            <option value="500m">500m 衝刺</option>
+            <option value="5000m">5000m 耐力</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs uppercase font-semibold">
+                <th class="p-3">名次</th>
+                <th class="p-3">學生姓名</th>
+                <th class="p-3">最佳時間</th>
+                <th class="p-3">平均配速 (/500m)</th>
+                <th class="p-3">風阻</th>
+                <th class="p-3">紀錄日期</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body" class="divide-y divide-slate-100 text-sm">
+              <!-- 動態載入排名數據 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 頁面 3：隊際表現紀錄 -->
+    <section id="page-team" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">隊際表現記錄</h2>
+          <p class="text-slate-500 text-sm">記錄團體接力或小組訓練，支援每次動態組合不同隊員</p>
+        </div>
+        <button onclick="openModal('team-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-1 shadow">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> 新增隊際紀錄
+        </button>
+      </div>
+
+      <div id="team-records-container" class="grid grid-cols-1 gap-6">
+        <!-- 動態載入隊際成績卡片 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal 1: 新增個人紀錄 -->
+  <div id="solo-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+      <h3 class="text-xl font-bold text-slate-900">新增個人訓練紀錄</h3>
+      <form id="solo-form" onsubmit="saveSoloRecord(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">學生</label>
+          <select id="form-solo-student" required class="w-full border rounded-lg p-2 text-sm bg-slate-50"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">日期</label>
+          <input type="date" id="form-solo-date" required class="w-full border rounded-lg p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">訓練項目</label>
+          <select id="form-solo-event" class="w-full border rounded-lg p-2 text-sm bg-slate-50">
+            <option value="2000m">2000m 測速</option>
+            <option value="500m">500m 衝刺</option>
+            <option value="5000m">5000m 耐力</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">風阻 (1-10)</label>
+            <input type="number" min="1" max="10" value="5" id="form-solo-damper" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">距離 (米)</label>
+            <input type="number" id="form-solo-distance" value="2000" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">時間 (秒)</label>
+            <input type="number" step="0.1" placeholder="例如 450" id="form-solo-time" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button type="button" onclick="closeModal('solo-modal')" class="px-4 py-2 border rounded-lg text-sm font-semibold">取消</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold">儲存紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: 新增隊際紀錄 (可動態加入成員) -->
+  <div id="team-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-xl font-bold text-slate-900">新增隊際訓練紀錄</h3>
+      <form id="team-form" onsubmit="saveTeamRecord(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">隊伍/組合名稱</label>
+            <input type="text" id="form-team-name" placeholder="例如：艇隊 A 組 / 接力一隊" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">訓練項目描述</label>
+            <input type="text" id="form-team-event" placeholder="例如：4x500m 接力" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">日期</label>
+            <input type="date" id="form-team-date" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">總時間 (秒)</label>
+            <input type="number" step="0.1" placeholder="例如 400" id="form-team-total-time" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+        </div>
+
+        <hr class="border-slate-200">
+
+        <!-- 隊員列表 (動態新增) -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="font-bold text-slate-800 text-sm">參賽隊員與個人分段數據</h4>
+            <button type="button" onclick="addTeamMemberRow()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md font-semibold text-slate-700 flex items-center gap-1">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> 新增隊員
+            </button>
+          </div>
+          <div id="team-members-inputs" class="space-y-2">
+            <!-- 動態加入欄位 -->
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t">
+          <button type="button" onclick="closeModal('team-modal')" class="px-4 py-2 border rounded-lg text-sm font-semibold">取消</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">儲存隊際紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // --- 預設預設數據 (若無 LocalStorage 數據時寫入) ---
+    const initialStudents = [
+      { id: "S01", name: "張偉明", class: "4A" },
+      { id: "S02", name: "陳嘉欣", class: "5B" },
+      { id: "S03", name: "李浩然", class: "3C" },
+      { id: "S04", name: "黃子健", class: "4A" }
+    ];
+
+    const initialSoloRecords = [
+      { id: 1, studentId: "S01", date: "2026-09-10", event: "2000m", damper: 5, distance: 2000, timeSec: 450 }, // 7:30
+      { id: 2, studentId: "S01", date: "2026-09-15", event: "2000m", damper: 6, distance: 2000, timeSec: 442 }, // 7:22
+      { id: 3, studentId: "S01", date: "2026-09-20", event: "2000m", damper: 5, distance: 2000, timeSec: 438 }, // 7:18
+      { id: 4, studentId: "S01", date: "2026-09-25", event: "2000m", damper: 5, distance: 2000, timeSec: 435 }, // 7:15
+      { id: 5, studentId: "S01", date: "2026-09-28", event: "2000m", damper: 6, distance: 2000, timeSec: 430 }, // 7:10
+      { id: 6, studentId: "S01", date: "2026-10-01", event: "2000m", damper: 5, distance: 2000, timeSec: 425 }, // 7:05 (最新)
+      { id: 7, studentId: "S02", date: "2026-09-28", event: "2000m", damper: 4, distance: 2000, timeSec: 490 },
+      { id: 8, studentId: "S03", date: "2026-09-29", event: "2000m", damper: 6, distance: 2000, timeSec: 440 }
+    ];
+
+    const initialTeamRecords = [
+      {
+        id: 101,
+        teamName: "男子接力 A 隊",
+        event: "4x500m 接力",
+        date: "2026-09-30",
+        totalTimeSec: 380,
+        members: [
+          { studentId: "S01", damper: 6, splitDistance: 500, splitTimeSec: 92 },
+          { studentId: "S03", damper: 5, splitDistance: 500, splitTimeSec: 95 },
+          { studentId: "S04", damper: 6, splitDistance: 500, splitTimeSec: 93 }
+        ]
+      }
+    ];
+
+    // 初始化 LocalStorage
+    let students = JSON.parse(localStorage.getItem('erg_students')) || initialStudents;
+    let soloRecords = JSON.parse(localStorage.getItem('erg_solo')) || initialSoloRecords;
+    let teamRecords = JSON.parse(localStorage.getItem('erg_team')) || initialTeamRecords;
+
+    function saveData() {
+      localStorage.setItem('erg_students', JSON.stringify(students));
+      localStorage.setItem('erg_solo', JSON.stringify(soloRecords));
+      localStorage.setItem('erg_team', JSON.stringify(teamRecords));
+    }
+
+    // --- 工具函式 ---
+    // 時間轉換：秒 ➔ 分:秒.毫秒
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = (seconds % 60).toFixed(1);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // 計算平均配速 (/500m)
+    function calculatePace(timeSec, distanceMeters) {
+      if (!distanceMeters || distanceMeters <= 0) return "N/A";
+      const paceSec = (timeSec / distanceMeters) * 500;
+      return formatTime(paceSec);
+    }
+
+    // --- 頁面切換機制 ---
+    function switchTab(tab) {
+      ['dashboard', 'ranking', 'team'].forEach(t => {
+        document.getElementById(`page-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).classList.replace('bg-blue-600', 'bg-slate-800');
+      });
+      document.getElementById(`page-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.replace('bg-slate-800', 'bg-blue-600');
+
+      if (tab === 'dashboard') renderDashboard();
+      if (tab === 'ranking') renderRanking();
+      if (tab === 'team') renderTeamRecords();
+    }
+
+    // --- Modal 控制 ---
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).classList.add('flex');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    }
+
+    // --- 1. 個人儀表板渲染 (最近 5 次) ---
+    function populateStudentDropdowns() {
+      const dashSelect = document.getElementById('dash-student-select');
+      const formSoloSelect = document.getElementById('form-solo-student');
+      dashSelect.innerHTML = '';
+      formSoloSelect.innerHTML = '';
+
+      students.forEach(s => {
+        const opt = `<option value="${s.id}">${s.name} (${s.class})</option>`;
+        dashSelect.innerHTML += opt;
+        formSoloSelect.innerHTML += opt;
+      });
+    }
+
+    function renderDashboard() {
+      const studentId = document.getElementById('dash-student-select').value;
+      const tbody = document.getElementById('dash-records-body');
+      tbody.innerHTML = '';
+
+      // 取得該學生紀錄，依日期降序（最新的在前面）
+      const studentRecords = soloRecords
+        .filter(r => r.studentId === studentId)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // 截取最近 5 次
+      const recent5 = studentRecords.slice(0, 5);
+
+      if (recent5.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">尚無訓練紀錄</td></tr>`;
+        return;
+      }
+
+      recent5.forEach(r => {
+        const pace = calculatePace(r.timeSec, r.distance);
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-medium text-slate-900">${r.date}</td>
+            <td class="p-3"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-semibold">${r.event}</span></td>
+            <td class="p-3 font-bold text-slate-700">${r.damper} 號風阻</td>
+            <td class="p-3 font-mono font-bold text-slate-900">${formatTime(r.timeSec)}</td>
+            <td class="p-3">${r.distance} m</td>
+            <td class="p-3 font-mono text-emerald-600 font-semibold">${pace} /500m</td>
+          </tr>
+        `;
+      });
+    }
+
+    // 保存個人紀錄
+    function saveSoloRecord(e) {
+      e.preventDefault();
+      const newRecord = {
+        id: Date.now(),
+        studentId: document.getElementById('form-solo-student').value,
+        date: document.getElementById('form-solo-date').value,
+        event: document.getElementById('form-solo-event').value,
+        damper: parseInt(document.getElementById('form-solo-damper').value),
+        distance: parseFloat(document.getElementById('form-solo-distance').value),
+        timeSec: parseFloat(document.getElementById('form-solo-time').value)
+      };
+      soloRecords.push(newRecord);
+      saveData();
+      closeModal('solo-modal');
+      renderDashboard();
+    }
+
+    // --- 2. 排名榜渲染 ---
+    function renderRanking() {
+      const selectedEvent = document.getElementById('rank-event-select').value;
+      const tbody = document.getElementById('ranking-body');
+      tbody.innerHTML = '';
+
+      // 計算每位學生在該項目的最佳成績
+      let bestRecords = [];
+
+      students.forEach(student => {
+        const records = soloRecords.filter(r => r.studentId === student.id && r.event === selectedEvent);
+        if (records.length > 0) {
+          // 找出時間最短者 (秒數最少)
+          const best = records.reduce((min, r) => r.timeSec < min.timeSec ? r : min, records[0]);
+          bestRecords.push({ student, record: best });
+        }
+      });
+
+      // 排序最佳成績 (時間最快者排前)
+      bestRecords.sort((a, b) => a.record.timeSec - b.record.timeSec);
+
+      if (bestRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">該項目暫無排名紀錄</td></tr>`;
+        return;
+      }
+
+      bestRecords.forEach((item, index) => {
+        const pace = calculatePace(item.record.timeSec, item.record.distance);
+        let rankBadge = `<span class="font-bold">${index + 1}</span>`;
+        if (index === 0) rankBadge = `<span class="bg-amber-100 text-amber-800 p-1.5 rounded-full font-bold">🥇 1</span>`;
+        if (index === 1) rankBadge = `<span class="bg-slate-200 text-slate-800 p-1.5 rounded-full font-bold">🥈 2</span>`;
+        if (index === 2) rankBadge = `<span class="bg-amber-700/10 text-amber-900 p-1.5 rounded-full font-bold">🥉 3</span>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3">${rankBadge}</td>
+            <td class="p-3 font-semibold text-slate-900">${item.student.name} (${item.student.class})</td>
+            <td class="p-3 font-mono font-bold text-blue-600">${formatTime(item.record.timeSec)}</td>
+            <td class="p-3 font-mono text-emerald-600 font-semibold">${pace} /500m</td>
+            <td class="p-3">${item.record.damper} 號</td>
+            <td class="p-3 text-slate-500">${item.record.date}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // --- 3. 隊際表現渲染與邏輯 ---
+    function renderTeamRecords() {
+      const container = document.getElementById('team-records-container');
+      container.innerHTML = '';
+
+      if (teamRecords.length === 0) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-slate-400">尚無隊際訓練紀錄</div>`;
+        return;
+      }
+
+      teamRecords.forEach(team => {
+        let memberRows = team.members.map(m => {
+          const student = students.find(s => s.id === m.studentId) || { name: "未知隊員", class: "" };
+          const pace = calculatePace(m.splitTimeSec, m.splitDistance);
+          return `
+            <tr class="text-xs">
+              <td class="py-1 font-semibold text-slate-700">${student.name} (${student.class})</td>
+              <td class="py-1">${m.damper} 號風阻</td>
+              <td class="py-1">${m.splitDistance}m</td>
+              <td class="py-1 font-mono">${formatTime(m.splitTimeSec)}</td>
+              <td class="py-1 font-mono text-emerald-600">${pace}/500m</td>
+            </tr>
+          `;
+        }).join('');
+
+        container.innerHTML += `
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+            <div class="flex justify-between items-start border-b pb-3">
+              <div>
+                <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded">${team.event}</span>
+                <h3 class="text-xl font-bold text-slate-900 mt-1">${team.teamName}</h3>
+                <p class="text-xs text-slate-400">日期: ${team.date}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-500 block">隊伍總時間</span>
+                <span class="text-2xl font-mono font-bold text-indigo-600">${formatTime(team.totalTimeSec)}</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="text-xs font-bold uppercase text-slate-500 mb-2">隊員組合與個人分段成績：</h4>
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b text-slate-400 text-[10px] uppercase">
+                    <th class="py-1">隊員</th>
+                    <th class="py-1">風阻</th>
+                    <th class="py-1">分段距離</th>
+                    <th class="py-1">分段時間</th>
+                    <th class="py-1">配速</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${memberRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // 動態新增隊員輸入欄位
+    function addTeamMemberRow() {
+      const container = document.getElementById('team-members-inputs');
+      const rowId = Date.now();
+      
+      let options = students.map(s => `<option value="${s.id}">${s.name} (${s.class})</option>`).join('');
+
+      const html = `
+        <div id="row-${rowId}" class="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+          <select class="member-student border rounded p-1 flex-1">${options}</select>
+          <input type="number" placeholder="風阻" value="5" min="1" max="10" class="member-damper w-16 border rounded p-1">
+          <input type="number" placeholder="距離m" value="500" class="member-dist w-20 border rounded p-1">
+          <input type="number" step="0.1" placeholder="時間(秒)" class="member-time w-20 border rounded p-1">
+          <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-1">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+      lucide.createIcons();
+    }
+
+    // 保存隊際紀錄
+    function saveTeamRecord(e) {
+      e.preventDefault();
+      
+      const memberRows = document.querySelectorAll('#team-members-inputs > div');
+      let members = [];
+      
+      memberRows.forEach(row => {
+        members.push({
+          studentId: row.querySelector('.member-student').value,
+          damper: parseInt(row.querySelector('.member-damper').value),
+          splitDistance: parseFloat(row.querySelector('.member-dist').value),
+          splitTimeSec: parseFloat(row.querySelector('.member-time').value) || 0
+        });
+      });
+
+      const newTeamRecord = {
+        id: Date.now(),
+        teamName: document.getElementById('form-team-name').value,
+        event: document.getElementById('form-team-event').value,
+        date: document.getElementById('form-team-date').value,
+        totalTimeSec: parseFloat(document.getElementById('form-team-total-time').value),
+        members: members
+      };
+
+      teamRecords.unshift(newTeamRecord); // 最新放在最前
+      saveData();
+      closeModal('team-modal');
+      renderTeamRecords();
+    }
+
+    // --- 頁面初始化 ---
+    window.onload = function() {
+      populateStudentDropdowns();
+      renderDashboard();
+      addTeamMemberRow(); // 隊際預設新增一行隊員輸入
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
